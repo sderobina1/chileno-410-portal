@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -251,38 +252,44 @@ function extractRow(rows, rowIdx, labelCol, dataStartCol){
 }
 
 function render(rows){
-  // Based on exact CSV structure:
-  // Label col = 12, Jan starts at col 13, rows:
-  // 14=Initial Balance, 17=Cleaning Payroll, 18=Cleaning Gas,
-  // 19=Supplies, 20=Property Mgmt, 21=Villa Closing, 22=Villa Inspection,
-  // 23=Expense Fund, 24=Landscaping, 25=Vision Pools, 26=Propane,
-  // 27=Utilities CFE, 28=Wifi, 29=Maintenance, 30=Property Tax, 32=Other,
-  // 35=Total Expenses, 38=Payments, 40=Ending Balance
+  // CSV structure from CLAUDE - PAGOS / CHILENO 410:
+  // Label col = 2, Jan starts at col 3
+  // Row 14 = Initial Balance
+  // Row 18 = Cleaning Payroll, 19=Cleaning Gas, 20=Supplies
+  // Row 21 = Property Management, 22=Villa Closing, 23=Villa Inspection
+  // Row 24 = Expense Fund, 25=Landscaping, 26=Landscaping Additional
+  // Row 27 = Vision Pools, 28=Propane, 29=Utilities CFE
+  // Row 30 = Wifi, 31=Maintenance & Repairs, 32=Property Tax
+  // Row 34 = Other
+  // Row 36 = TOTAL EXPENSES
+  // Row 39 = PAYMENTS, Row 40 = Date, Row 42 = Ending Balance
   const L=2, J=3;
   const get=(r)=>extractRow(rows,r,L,J);
 
   const data={
     initialBalance: get(14),
     categories:{
-      'Cleaning payroll':       get(17),
-      'Cleaning gas':           get(18),
-      'Supplies & restocking':  get(19),
-      'Property management':    get(20),
-      'Villa closing / opening':get(21),
-      'Villa inspection':       get(22),
-      'Expense fund':           get(23),
-      'Landscaping':            get(24),
-      'Vision pools':           get(25),
-      'Propane':                get(26),
-      'Utilities CFE':          get(27),
-      'Wifi':                   get(28),
-      'Maintenance & repairs':  get(29),
-      'Property tax':           get(30),
-      'Other':                  get(32),
+      'Cleaning payroll':        get(18),
+      'Cleaning gas':            get(19),
+      'Supplies & restocking':   get(20),
+      'Property management':     get(21),
+      'Villa closing / opening': get(22),
+      'Villa inspection':        get(23),
+      'Expense fund':            get(24),
+      'Landscaping':             get(25),
+      'Landscaping (additional)':get(26),
+      'Vision pools':            get(27),
+      'Propane':                 get(28),
+      'Utilities CFE':           get(29),
+      'Wifi':                    get(30),
+      'Maintenance & repairs':   get(31),
+      'Property tax':            get(32),
+      'Other':                   get(34),
     },
-    totalExpenses: get(35),
-    payments:      get(38),
-    endingBalance: get(40),
+    totalExpenses: get(36),
+    payments:      get(39),
+    payDate:       get(40),
+    endingBalance: get(42),
   };
   renderWithData(data);
 }
