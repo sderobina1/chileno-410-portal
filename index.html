@@ -278,7 +278,7 @@ function render(rows){
     payDate:       get(40),
     endingBalance: get(41),
   };
-  renderWithData(data);
+  renderWithData(data, rows);
 }
 
 function renderStatic(){
@@ -309,7 +309,8 @@ function renderStatic(){
   renderWithData(data);
 }
 
-function renderWithData(data){
+function renderWithData(data, rows){
+  rows = rows || [];
   const annTotal=data.totalExpenses.reduce((a,b)=>a+b,0);
   const annPay=data.payments.reduce((a,b)=>a+b,0);
   const lastBal=data.endingBalance[11];
