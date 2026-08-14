@@ -251,6 +251,19 @@ function extractRow(rows, rowIdx, labelCol, dataStartCol){
   return MONTHS.map((_,m)=>parseMoney(row[dataStartCol+m]||''));
 }
 
+function findJanCol(rows){
+  // Find the row with "Jan" header to determine actual column offset
+  for(let i=0;i<rows.length;i++){
+    const row=rows[i];
+    for(let c=0;c<row.length;c++){
+      if((row[c]||'').toString().trim()==='Jan'){
+        return c;
+      }
+    }
+  }
+  return 3; // fallback
+}
+
 function render(rows){
   // CSV structure from CLAUDE - PAGOS / CHILENO 410:
   // Label col = 2, Jan starts at col 3
@@ -263,11 +276,14 @@ function render(rows){
   // Row 34 = Other
   // Row 36 = TOTAL EXPENSES
   // Row 39 = PAYMENTS, Row 40 = Date, Row 42 = Ending Balance
-  const L=2, J=3;
+  const janCol = findJanCol(rows);
+  const L=janCol-1; // label col is one before Jan
+  const J=janCol;
+  console.log('Jan col:', janCol, 'Label col:', L);
   const get=(r)=>extractRow(rows,r,L,J);
 
   const data={
-    initialBalance: get(14),
+    initialBalance: get(15),
     categories:{
       'Cleaning payroll':        get(18),
       'Cleaning gas':            get(19),
@@ -286,9 +302,9 @@ function render(rows){
       'Property tax':            get(32),
       'Other':                   get(34),
     },
-    totalExpenses: get(36),
-    payments:      get(39),
-    payDate:       get(40),
+    totalExpenses: get(37),
+    payments:      get(40),
+    payDate:       get(41),
     endingBalance: get(42),
   };
   renderWithData(data);
