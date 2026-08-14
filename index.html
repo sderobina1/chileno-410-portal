@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,46 +135,15 @@
         </div>
       </div>
 
-      <div class="sec">
+      <div class="sec" id="pendingSection">
         <div class="sec-hdr">
           <div style="display:flex;align-items:center;gap:8px;">
             <span class="sec-title">Pending maintenance approvals</span>
-            <span class="pill-red">3 pending</span>
+            <span class="pill-red" id="pendingCount"></span>
           </div>
           <span style="font-size:12px;color:var(--muted);">Your approval required</span>
         </div>
-        <div class="card">
-          <div class="pend-item">
-            <div class="p-icon ic-r">🔧</div>
-            <div class="p-body">
-              <div class="p-title">Vision pools — equipment service</div>
-              <div class="p-desc">Pool equipment inspection and chemical balance adjustment required before next guest arrival.</div>
-              <div class="p-meta"><span class="pill-red">Urgent</span><span class="mpill">Submitted May 2026</span><span class="mpill">Vision Pools</span></div>
-              <div class="btns"><button class="btn-ok">Approve $850</button><button class="btn-no">Decline</button><a href="#" class="btn-lnk">📄 View quote</a></div>
-            </div>
-            <div class="p-amt">$850</div>
-          </div>
-          <div class="pend-item">
-            <div class="p-icon ic-a">🔥</div>
-            <div class="p-body">
-              <div class="p-title">Propane tank refill</div>
-              <div class="p-desc">Tank running low — refill recommended before hurricane season closure in May.</div>
-              <div class="p-meta"><span class="mpill">Non-urgent</span><span class="mpill">Submitted Apr 2026</span></div>
-              <div class="btns"><button class="btn-ok">Approve $420</button><button class="btn-no">Decline</button><a href="#" class="btn-lnk">📄 View quote</a></div>
-            </div>
-            <div class="p-amt">$420</div>
-          </div>
-          <div class="pend-item">
-            <div class="p-icon ic-b">📡</div>
-            <div class="p-body">
-              <div class="p-title">Wifi router upgrade</div>
-              <div class="p-desc">Current router causing connectivity issues. Upgrade to mesh system recommended.</div>
-              <div class="p-meta"><span class="mpill">Normal</span><span class="mpill">Submitted Apr 2026</span></div>
-              <div class="btns"><button class="btn-ok">Approve $380</button><button class="btn-no">Decline</button><a href="#" class="btn-lnk">📄 View quote</a></div>
-            </div>
-            <div class="p-amt">$380</div>
-          </div>
-        </div>
+        <div class="card" id="pendingCard"></div>
       </div>
 
       <div class="sec">
@@ -236,12 +204,14 @@ async function loadData(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const txt = await res.text();
     if(!txt || txt.length < 100) throw new Error('Empty response');
-    render(parseCSV(txt));
+    const csvData = parseCSV(txt);
+    render(csvData);
   }catch(e){
+    console.error('Portal error:', e.message, e.stack);
     document.getElementById('loadDiv').style.display='none';
     const err=document.getElementById('errDiv');
     err.style.display='block';
-    err.textContent='Updating data... If this message persists, click Refresh.';
+    err.textContent='Updating data... If this message persists, click Refresh. Error: '+e.message;
     renderStatic();
   }
 }
@@ -456,6 +426,70 @@ function renderWithData(data){
   html+=`<tr class="r-bal"><td>Ending balance</td>${data.endingBalance.map(v=>`<td class="${v<0?'neg':v===0?'zero':''}">${fmt(v)}</td>`).join('')}<td class="ann" style="color:${lb<0?'#993C1D':'#085041'};font-weight:500;">${fmt(lb)}</td></tr>`;
   html+='</tbody>';
   document.getElementById('expTbl').innerHTML=html;
+
+  // Render pending approvals - find header row with "Item" then read next rows
+  const icons = ['🔧','🌿','🏊'];
+  const iconClasses = ['ic-r','ic-a','ic-b'];
+  let pendingHTML = '';
+  let pendingCount = 0;
+  
+  // Find the row with "Item" header
+  let itemHeaderRow = -1;
+  for(let i=0;i<rows.length;i++){
+    const row = rows[i];
+    for(let c=0;c<row.length;c++){
+      if((row[c]||'').toString().trim()==='Item'){
+        itemHeaderRow = i;
+        break;
+      }
+    }
+    if(itemHeaderRow >= 0) break;
+  }
+  
+  if(itemHeaderRow >= 0){
+    // Find col indices from header row
+    const headerRow = rows[itemHeaderRow];
+    let itemCol=2, companyCol=12, costCol=15;
+    for(let c=0;c<headerRow.length;c++){
+      const h = (headerRow[c]||'').toString().trim();
+      if(h==='Item') itemCol=c;
+      if(h==='Company') companyCol=c;
+      if(h==='Cost') costCol=c;
+    }
+    
+    // Read up to 3 data rows after header (skip empty rows)
+    let iconIdx=0;
+    for(let i=itemHeaderRow+1; i<rows.length && iconIdx<3; i++){
+      const row = rows[i];
+      const item = (row[itemCol]||'').toString().trim();
+      if(!item) continue;
+      const company = (row[companyCol]||'').toString().trim();
+      const costRaw = (row[costCol]||'').toString().trim();
+      const cost = parseMoney(costRaw);
+      const costFmt = cost > 0 ? fmt(cost) : '';
+      pendingCount++;
+      pendingHTML += `<div class="pend-item">
+        <div class="p-icon ${iconClasses[iconIdx]}">${icons[iconIdx]}</div>
+        <div class="p-body">
+          <div class="p-title">${item}</div>
+          <div class="p-meta">${company?`<span class="mpill">${company}</span>`:''}</div>
+          <div class="btns">${costFmt?`<button class="btn-ok">Approve ${costFmt}</button>`:''}
+          <button class="btn-no">Decline</button></div>
+        </div>
+        ${costFmt?`<div class="p-amt">${costFmt}</div>`:''}
+      </div>`;
+      iconIdx++;
+    }
+  }
+  const pendingCard = document.getElementById('pendingCard');
+  const pendingSection = document.getElementById('pendingSection');
+  if(pendingCount > 0){
+    pendingCard.innerHTML = pendingHTML;
+    document.getElementById('pendingCount').textContent = pendingCount + ' pending';
+    pendingSection.style.display = 'block';
+  } else {
+    pendingSection.style.display = 'none';
+  }
 
   document.getElementById('loadDiv').style.display='none';
   document.getElementById('mainDiv').style.display='block';
