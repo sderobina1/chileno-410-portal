@@ -276,36 +276,36 @@ function render(rows){
   // Row 34 = Other
   // Row 36 = TOTAL EXPENSES
   // Row 39 = PAYMENTS, Row 40 = Date, Row 42 = Ending Balance
-  const janCol = findJanCol(rows);
-  const L=janCol-1; // label col is one before Jan
-  const J=janCol;
-  console.log('Jan col:', janCol, 'Label col:', L);
+  // Fixed column mapping based on actual CSV structure:
+  // Col 2 = label, Col 3 = Jan, Col 4 = Feb ... Col 14 = Dec
+  const L=2;
+  const J=3;
   const get=(r)=>extractRow(rows,r,L,J);
 
   const data={
-    initialBalance: get(15),
+    initialBalance: get(14),
     categories:{
-      'Cleaning payroll':        get(18),
-      'Cleaning gas':            get(19),
-      'Supplies & restocking':   get(20),
-      'Property management':     get(21),
-      'Villa closing / opening': get(22),
-      'Villa inspection':        get(23),
-      'Expense fund':            get(24),
-      'Landscaping':             get(25),
-      'Landscaping (additional)':get(26),
-      'Vision pools':            get(27),
-      'Propane':                 get(28),
-      'Utilities CFE':           get(29),
-      'Wifi':                    get(30),
-      'Maintenance & repairs':   get(31),
-      'Property tax':            get(32),
-      'Other':                   get(34),
+      'Cleaning payroll':        get(17),
+      'Cleaning gas':            get(18),
+      'Supplies & restocking':   get(19),
+      'Property management':     get(20),
+      'Villa closing / opening': get(21),
+      'Villa inspection':        get(22),
+      'Expense fund':            get(23),
+      'Landscaping':             get(24),
+      'Landscaping (additional)':get(25),
+      'Vision pools':            get(26),
+      'Propane':                 get(27),
+      'Utilities CFE':           get(28),
+      'Wifi':                    get(29),
+      'Maintenance & repairs':   get(30),
+      'Property tax':            get(31),
+      'Other':                   get(33),
     },
-    totalExpenses: get(37),
-    payments:      get(40),
-    payDate:       get(41),
-    endingBalance: get(42),
+    totalExpenses: get(36),
+    payments:      get(39),
+    payDate:       get(40),
+    endingBalance: get(41),
   };
   renderWithData(data);
 }
